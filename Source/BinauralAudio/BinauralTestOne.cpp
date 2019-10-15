@@ -65,11 +65,8 @@ float UBinauralTestOne::GetElevation()
 }
 float UBinauralTestOne::GetAzimuth()
 {
-	float AzimuthRange = (this->GetOwner()->GetActorTransform().GetLocation() - PlayerReference->GetTransform().GetLocation()).Size2D();
-	FVector ForwardPointOfPlayer = PlayerReference->GetActorForwardVector() * AzimuthRange;
-	ForwardPointOfPlayer.Normalize();
-	FVector ThisLocation = this->GetOwner()->GetTransform().GetLocation() - PlayerReference->GetTransform().GetLocation();
-	ThisLocation.Normalize();
+	FVector ForwardPointOfPlayer = PlayerReference->GetActorForwardVector() * AzimuthRange.Normalize();
+	FVector ThisLocation = (this->GetOwner()->GetTransform().GetLocation() - PlayerReference->GetTransform().GetLocation()).Normalize();
 	float Dot = FVector::DotProduct(ThisLocation, ForwardPointOfPlayer);
 	Azimuth = UKismetMathLibrary::Acos(Dot) / (PI / 180);
 	if (FVector::DotProduct(PlayerReference->GetActorRightVector() * Range, ThisLocation) > 0) Azimuth = 360 - Azimuth;
