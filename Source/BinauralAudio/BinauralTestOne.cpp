@@ -2,7 +2,6 @@
 
 
 #include "BinauralTestOne.h"
-#include <string>
 
 // Sets default values for this component's properties
 UBinauralTestOne::UBinauralTestOne()
@@ -22,8 +21,13 @@ void UBinauralTestOne::BeginPlay()
 	 // Checks if the audio exists
 	if (Audio)
 	{
+		//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Blue, TEXT(Audio->RawData.GetCopy(NULL, NULL)));
+		Audio->ChannelOffsets.Empty();
+		RightAudio = Audio;
+		Audio->ChannelOffsets.Add(2);
+		RightAudio->ChannelOffsets.Add(3);
 		LeftEar->SetSound(Audio);
-		RightEar->SetSound(Audio);
+		RightEar->SetSound(RightAudio);
 	}else
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, "No Audio selected at " + this->GetOwner()->GetName() + ", sound will not play");
@@ -47,9 +51,6 @@ void UBinauralTestOne::TickComponent(float DeltaTime, ELevelTick TickType, FActo
 	FVector printTest = FVector(GetRange(), GetElevation(), GetAzimuth());
 	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Blue, printTest.ToString());
 
-	LeftEar->AdjustAttenuation(LeftEarAttentuation);
-	RightEar->AdjustAttenuation(RightEarAttentuation);
-
 }
 
 // Called when the HRTF variables need to be calculated
@@ -65,11 +66,9 @@ float UBinauralTestOne::GetElevation()
 }
 float UBinauralTestOne::GetAzimuth()
 {
-	float AzimuthRange = (this->GetOwner()->GetActorTransform().GetLocation() - PlayerReference->GetTransform().GetLocation()).Size2D();
-	FVector ForwardPointOfPlayer = PlayerReference->GetActorForwardVector() * AzimuthRange;
+	FVector ForwardPointOfPlayer = PlayerReference->GetActorForwardVector();
 	ForwardPointOfPlayer.Normalize();
-	FVector ThisLocation = this->GetOwner()->GetTransform().GetLocation() - PlayerReference->GetTransform().GetLocation();
-	ThisLocation.Normalize();
+	FVector ThisLocation = this->GetOwner()->GetTransform().GetLocation() - PlayerReference->GetTransform().GetLocation().Normalize();
 	float Dot = FVector::DotProduct(ThisLocation, ForwardPointOfPlayer);
 	Azimuth = UKismetMathLibrary::Acos(Dot) / (PI / 180);
 	if (FVector::DotProduct(PlayerReference->GetActorRightVector() * Range, ThisLocation) > 0) Azimuth = 360 - Azimuth;

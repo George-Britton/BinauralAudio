@@ -6,8 +6,9 @@
 #include "Components/ActorComponent.h"
 #include "Engine.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "ActiveSound.h"
+#include "UnrealAudioSoundFile.h" 
 #include "BinauralTestOne.generated.h"
-
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class BINAURALAUDIO_API UBinauralTestOne : public UActorComponent
@@ -23,10 +24,6 @@ public:
 		UAudioComponent* LeftEar;
 	UPROPERTY()
 		UAudioComponent* RightEar;
-	UPROPERTY()
-		FSoundAttenuationSettings LeftEarAttentuation;
-	UPROPERTY()
-		FSoundAttenuationSettings RightEarAttentuation;
 
 	UPROPERTY()
 		float Azimuth = 0;
@@ -36,7 +33,9 @@ public:
 		float Range = 0;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
-		USoundCue* Audio;
+		USoundWave* Audio;
+	UPROPERTY()
+		USoundWave* RightAudio;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")
 		ACharacter* PlayerReference;
