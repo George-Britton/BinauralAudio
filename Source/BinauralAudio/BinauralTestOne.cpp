@@ -19,9 +19,10 @@ void UBinauralTestOne::BeginPlay()
 {
 	Super::BeginPlay();
 	 // Checks if the audio exists
+
+	/*
 	if (Audio)
 	{
-		//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Blue, TEXT(Audio->RawData.GetCopy(NULL, NULL)));
 		Audio->ChannelOffsets.Empty();
 		RightAudio = Audio;
 		Audio->ChannelOffsets.Add(2);
@@ -39,6 +40,24 @@ void UBinauralTestOne::BeginPlay()
 		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, this->GetOwner()->GetName() + " has no Player Reference");
 		PrimaryComponentTick.SetTickFunctionEnable(false);
 	}
+	*/
+
+	if(!Audio->CookedSpectralTimeData.Num())GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, "First null");
+	else if (!Audio->CookedSpectralTimeData[0].Data.Num()) GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, "Second null");
+	else {
+		for (int32 i = 0; i < Audio->CookedSpectralTimeData.Num(); i++)
+		{
+			for (int32 j = 0; j < Audio->CookedSpectralTimeData[i].Data.Num(); j++)
+			{
+				FString Message = "CookedSpectralTimeData[";
+				Message.AppendInt(i);
+				Message.Append("]Data[");
+				Message.AppendInt(j);
+				Message.Append("]: " + FString::SanitizeFloat(Audio->CookedSpectralTimeData[i].Data[j].Magnitude));
+				GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, Message);
+			}
+		}
+	}
 }
 
 
@@ -47,23 +66,27 @@ void UBinauralTestOne::TickComponent(float DeltaTime, ELevelTick TickType, FActo
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
+
+	/*
 	//test print of variables
 	FVector printTest = FVector(GetRange(), GetElevation(), GetAzimuth());
 	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Blue, printTest.ToString());
-
+	*/
 }
 
-// Called when the HRTF variables need to be calculated
+// Calculates Range between audio source and player
 float UBinauralTestOne::GetRange()
 {
 	Range = (this->GetOwner()->GetActorTransform().GetLocation() - PlayerReference->GetTransform().GetLocation()).Size();
 	return Range;
 }
+// Calculates Elevation of audio source relative to player
 float UBinauralTestOne::GetElevation()
 {
 	Elevation = FMath::Sin((this->GetOwner()->GetTransform().GetLocation().Z - PlayerReference->GetTransform().GetLocation().Z) / Range);
 	return Elevation;
 }
+// Calculates Azimuth of audio source around player
 float UBinauralTestOne::GetAzimuth()
 {
 	FVector ForwardPointOfPlayer = PlayerReference->GetActorForwardVector();

@@ -7,7 +7,8 @@
 #include "Engine.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "ActiveSound.h"
-#include "UnrealAudioSoundFile.h" 
+#include "UnrealAudioSoundFile.h"
+#include "Serialization/BulkData.h"
 #include "BinauralTestOne.generated.h"
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
@@ -36,6 +37,8 @@ public:
 		USoundWave* Audio;
 	UPROPERTY()
 		USoundWave* RightAudio;
+	UPROPERTY()
+		TArray<FSoundWaveSpectralTimeData> DataToAnalyse;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")
 		ACharacter* PlayerReference;
