@@ -61,9 +61,14 @@ public:
 
 	UPROPERTY()
 		FTimerHandle EarTimer;
-	//UPROPERTY()
-	//	FTimerDelegate EarDelegate;
-	
+	UPROPERTY()
+		FTimerDynamicDelegate EarDelegate;
+
+	UPROPERTY()
+		FTimerHandle PlayTimer;
+	UPROPERTY()
+		FTimerDynamicDelegate PlayDelegate;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -80,7 +85,7 @@ public:
 		float GetRange();
 
 	UFUNCTION()
-		void PlayFirstEar(ECloserEar FirstEar);
+		void PlayFirstEar();
 	UFUNCTION()
-		void PlaySecondEar(ECloserEar SecondEar);
+		void PlaySecondEar();
 };

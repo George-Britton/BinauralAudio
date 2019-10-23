@@ -13,7 +13,8 @@ ABinauralTestThree::ABinauralTestThree()
 	AudioPlayer->SetupAttachment(this->RootComponent);
 	AudioPlayerRight = CreateDefaultSubobject<UAudioComponent>(TEXT("Audio Player Right"));
 	AudioPlayerRight->SetupAttachment(this->RootComponent);
-/*
+
+	DelayArray.Init(0, 361);
 	float Up = 0;
 	for (int32 AzimuthCount = 0; AzimuthCount < 90; AzimuthCount++)
 	{
@@ -22,26 +23,19 @@ ABinauralTestThree::ABinauralTestThree()
 		DelayArray[AzimuthCount + 180] = Up;
 		DelayArray[AzimuthCount + 270] = 0.000625 - Up;
 		Up += 0.000625 / 90;
-	}*/
+	}
 }
 
 // Called when the game starts or when spawned
 void ABinauralTestThree::BeginPlay()
 {
 	Super::BeginPlay();
-	/*
+	
 	if (Audio) RightAudio = Audio;
-	Audio->ChannelOffsets.Empty();
-	RightAudio->ChannelOffsets.Empty();
-	Audio->ChannelOffsets.Add(2);
-	RightAudio->ChannelOffsets.Add(3);
-	AudioPlayer->SetSound(Audio);
 	AudioPlayerRight->SetSound(RightAudio);
 
-	for(int32 i = 0; i < 360; i++)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 15, FColor::Yellow, FString::SanitizeFloat(DelayArray[i]));
-	}*/
+	PlayDelegate.BindUFunction(this, "PlayFirstEar");
+	GetWorld()->GetTimerManager().SetTimer(PlayTimer, PlayDelegate, 0.5, true);
 }
 
 // Called every frame
@@ -49,12 +43,15 @@ void ABinauralTestThree::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	
+	// Sets base input variables
+	Range = GetRange();
+	Elevation = GetElevation();
+	Azimuth = GetAzimuth();
+
 	//test print of variables
-	FVector ThisLocation = this->GetActorLocation() - PlayerReference->GetTransform().GetLocation();
-	ThisLocation.Normalize();
-	FVector Output;
-	Output = FVector(GetElevation(), GetAzimuth(), GetRange());
-	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, Output.ToString());
+	//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, FString::SanitizeFloat(DelayArray[FMath::FloorToInt(GetAzimuth())]));
+	//if(CloserEar == ECloserEar::LeftEar) GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Magenta, "Left Ear");
+	//else GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Magenta, "Right Ear");
 
 	AttenuationDetails.DistanceAlgorithm = EAttenuationDistanceModel::Linear;
 	AttenuationDetails.AttenuationEval(GetRange(), 1, 1);
@@ -83,26 +80,32 @@ float ABinauralTestThree::GetAzimuth()
 	ThisLoc.Normalize();
 	float Dot = FVector::DotProduct(ThisLoc, ForwardPoint);
 	Azimuth = UKismetMathLibrary::Acos(Dot) / (PI / 180);
+
+	// Gets the closest ear and sets full 360° rotation
 	FVector RightPoint = PlayerReference->GetActorRightVector();
 	RightPoint.Z = 0;
 	RightPoint.Normalize();
-	if (FVector::DotProduct(RightPoint, ThisLoc) > 0) Azimuth = 360 - Azimuth;
+	if (FVector::DotProduct(RightPoint, ThisLoc) > 0)
+	{
+		Azimuth = 360 - Azimuth;
+		CloserEar = ECloserEar::RightEar;
+	}else CloserEar = ECloserEar::LeftEar;
 
 	return Azimuth;
-
 }
 
 // Called when the audio is ready to be played
-void ABinauralTestThree::PlayFirstEar(ECloserEar FirstEar)
+void ABinauralTestThree::PlayFirstEar()
 {
-	//EarDelegate.BindUFunction(this, FName("PlaySecondEar"), CloserEar);
-	//GetWorld()->GetTimerManager().SetTimer(EarTimer, EarDelegate, DelayArray[FMath::RoundFromZero(Azimuth)], false);
-	if(FirstEar == ECloserEar::RightEar) AudioPlayerRight->Play();
+	EarDelegate.BindUFunction(this, "PlaySecondEar");
+	GetWorld()->GetTimerManager().SetTimer(EarTimer, EarDelegate, DelayArray[FMath::FloorToInt(Azimuth)], false);
+	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Cyan, "First audio");
+	if(CloserEar == ECloserEar::RightEar) AudioPlayerRight->Play();
 	else AudioPlayer->Play();
 }
-void ABinauralTestThree::PlaySecondEar(ECloserEar SecondEar)
+void ABinauralTestThree::PlaySecondEar()
 {
-	AudioPlayerRight->Play();
-	if (SecondEar == ECloserEar::RightEar) AudioPlayer->Play();
+	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Cyan, "First audio");
+	if (CloserEar == ECloserEar::RightEar) AudioPlayer->Play();
 	else AudioPlayerRight->Play();
 }
