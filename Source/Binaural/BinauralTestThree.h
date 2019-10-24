@@ -7,6 +7,8 @@
 #include "Engine.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "TimerManager.h"
+#include "UObject/Package.h"
+//#include "Engine/Source/Editor/AudioEditor/Classes/Factories/SoundSurroundFactory.h"
 #include "BinauralTestThree.generated.h"
 
 UENUM()

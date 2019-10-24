@@ -31,11 +31,21 @@ void ABinauralTestThree::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	if (Audio) RightAudio = Audio;
-	AudioPlayerRight->SetSound(RightAudio);
+	if (Audio)
+	{
+		if(FCString::Strcmp(*Audio->GetFullName(), TEXT("WAV")) != 0)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, "Must be .wav filetype");
+			PrimaryActorTick.bCanEverTick = false;
+		}else
+		{
+			RightAudio = Audio;
+			AudioPlayerRight->SetSound(RightAudio);
 
-	PlayDelegate.BindUFunction(this, "PlayFirstEar");
-	GetWorld()->GetTimerManager().SetTimer(PlayTimer, PlayDelegate, 0.5, true);
+			PlayDelegate.BindUFunction(this, "PlayFirstEar");
+			GetWorld()->GetTimerManager().SetTimer(PlayTimer, PlayDelegate, 0.5, true);
+		}
+	}
 }
 
 // Called every frame
@@ -105,7 +115,44 @@ void ABinauralTestThree::PlayFirstEar()
 }
 void ABinauralTestThree::PlaySecondEar()
 {
-	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Cyan, "First audio");
+	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Cyan, "Second audio");
 	if (CloserEar == ECloserEar::RightEar) AudioPlayer->Play();
 	else AudioPlayerRight->Play();
+
+
+
+
+
+
+	FName OutputSoundLeftName = "Output Sound";
+	USoundWave* OutputSoundLeft = NewObject<USoundWave>(this, OutputSoundLeftName);
+	FName OutputSoundRightName = "Output Sound";
+	USoundWave* OutputSoundRight = NewObject<USoundWave>(this, OutputSoundRightName);
+
+	if (OutputSoundLeft->ChannelOffsets.Num())
+	{
+		OutputSoundLeft->ChannelOffsets.Empty(SPEAKER_Count);
+		OutputSoundLeft->ChannelOffsets.AddZeroed(SPEAKER_Count);
+	}
+	if (OutputSoundLeft->ChannelSizes.Num())
+	{
+		OutputSoundLeft->ChannelSizes.Empty(SPEAKER_Count);
+		OutputSoundLeft->ChannelSizes.AddZeroed(SPEAKER_Count);
+	}
+	if (OutputSoundRight->ChannelOffsets.Num())
+	{
+		OutputSoundRight->ChannelOffsets.Empty(SPEAKER_Count);
+		OutputSoundRight->ChannelOffsets.AddZeroed(SPEAKER_Count);
+	}
+	if (OutputSoundRight->ChannelSizes.Num())
+	{
+		OutputSoundRight->ChannelSizes.Empty(SPEAKER_Count);
+		OutputSoundRight->ChannelSizes.AddZeroed(SPEAKER_Count);
+	}
+
+	
+	
+
+
+
 }
