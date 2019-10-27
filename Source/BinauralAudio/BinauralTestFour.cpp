@@ -36,8 +36,8 @@ void ABinauralTestFour::BeginPlay()
 			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, "Must be .wav filetype");
 			PrimaryActorTick.bCanEverTick = false;
 		}
-		Buffer = *Audio->CachedRealtimeFirstBuffer;
-		//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, FString::FromInt(Buffer));
+		Buffer = Audio->RawPCMData;
+		Audio->Data
 	}	
 }
 
@@ -94,7 +94,7 @@ float ABinauralTestFour::GetAzimuth()
 // Generates the output sound
 void ABinauralTestFour::CreateSound()
 {
-		/*Audio->PreSaveRoot(Audio->GetFullName + TEXT(".sl"));
+	Audio->PreSaveRoot(Audio->GetFullName + TEXT(".sl"));
 	FactorySound = SoundSurroundFactory->FactoryCreateBinary(
 		this->GetClass(),
 		this,
@@ -103,7 +103,8 @@ void ABinauralTestFour::CreateSound()
 		this,
 		TEXT("WAV"),
 		Buffer,
-
+		BufferEnd,
+		Warnings
 		);
 
 	Audio->PreSaveRoot(Audio->GetFullName + TEXT(".sr"));
@@ -115,7 +116,8 @@ void ABinauralTestFour::CreateSound()
 		this,
 		TEXT("WAV"),
 		Buffer,
-
-		);*/
+		BufferEnd,
+		Warnings
+		);
 }
 

@@ -59,12 +59,15 @@ public:
 		ACharacter* PlayerReference;
 
 	// Factory variables the create the output sound
-	//UPROPERTY()
-	//	class USoundSurroundFactory* SoundSurroundFactory;
+	UPROPERTY()
+		class USoundSurroundFactory* SoundSurroundFactory;
 	UPROPERTY()
 		UObject* FactorySound;
 	UPROPERTY()
-		uint8 Buffer;
+		FFeedbackContext* Warnings;
+	
+		const uint8* Buffer;
+		const uint8* BufferEnd = 16;
 
 	// Sound to be played
 	UPROPERTY()
