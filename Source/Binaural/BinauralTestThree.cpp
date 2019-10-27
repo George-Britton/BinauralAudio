@@ -11,8 +11,6 @@ ABinauralTestThree::ABinauralTestThree()
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
 	AudioPlayer = CreateDefaultSubobject<UAudioComponent>(TEXT("Audio Player"));
 	AudioPlayer->SetupAttachment(this->RootComponent);
-	AudioPlayerRight = CreateDefaultSubobject<UAudioComponent>(TEXT("Audio Player Right"));
-	AudioPlayerRight->SetupAttachment(this->RootComponent);
 
 	DelayArray.Init(0, 361);
 	float Up = 0;
@@ -37,14 +35,9 @@ void ABinauralTestThree::BeginPlay()
 		{
 			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, "Must be .wav filetype");
 			PrimaryActorTick.bCanEverTick = false;
-		}else
-		{
-			RightAudio = Audio;
-			AudioPlayerRight->SetSound(RightAudio);
-
-			PlayDelegate.BindUFunction(this, "PlayFirstEar");
-			GetWorld()->GetTimerManager().SetTimer(PlayTimer, PlayDelegate, 0.5, true);
 		}
+		Buffer = *Audio->CachedRealtimeFirstBuffer;
+		//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, FString::FromInt(Buffer));
 	}
 }
 
@@ -57,14 +50,6 @@ void ABinauralTestThree::Tick(float DeltaTime)
 	Range = GetRange();
 	Elevation = GetElevation();
 	Azimuth = GetAzimuth();
-
-	//test print of variables
-	//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, FString::SanitizeFloat(DelayArray[FMath::FloorToInt(GetAzimuth())]));
-	//if(CloserEar == ECloserEar::LeftEar) GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Magenta, "Left Ear");
-	//else GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Magenta, "Right Ear");
-
-	AttenuationDetails.DistanceAlgorithm = EAttenuationDistanceModel::Linear;
-	AttenuationDetails.AttenuationEval(GetRange(), 1, 1);
 }
 
 // Calculates Range between audio source and player
@@ -104,55 +89,31 @@ float ABinauralTestThree::GetAzimuth()
 	return Azimuth;
 }
 
-// Called when the audio is ready to be played
-void ABinauralTestThree::PlayFirstEar()
+// Generates the output sound
+void ABinauralTestThree::CreateSound()
 {
-	EarDelegate.BindUFunction(this, "PlaySecondEar");
-	GetWorld()->GetTimerManager().SetTimer(EarTimer, EarDelegate, DelayArray[FMath::FloorToInt(Azimuth)], false);
-	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Cyan, "First audio");
-	if(CloserEar == ECloserEar::RightEar) AudioPlayerRight->Play();
-	else AudioPlayer->Play();
-}
-void ABinauralTestThree::PlaySecondEar()
-{
-	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Cyan, "Second audio");
-	if (CloserEar == ECloserEar::RightEar) AudioPlayer->Play();
-	else AudioPlayerRight->Play();
+	/*Audio->PreSaveRoot(Audio->GetFullName + TEXT(".sl"));
+	FactorySound = SoundSurroundFactory->FactoryCreateBinary(
+		this->GetClass(),
+		this,
+		"OutputSound",
+		EObjectFlags::RF_Public,
+		this,
+		TEXT("WAV"),
+		Buffer,
 
+		);
 
+	Audio->PreSaveRoot(Audio->GetFullName + TEXT(".sr"));
+	FactorySound = SoundSurroundFactory->FactoryCreateBinary(
+		this->GetClass(),
+		this,
+		"OutputSound",
+		EObjectFlags::RF_Public,
+		this,
+		TEXT("WAV"),
+		Buffer,
 
-
-
-
-	FName OutputSoundLeftName = "Output Sound";
-	USoundWave* OutputSoundLeft = NewObject<USoundWave>(this, OutputSoundLeftName);
-	FName OutputSoundRightName = "Output Sound";
-	USoundWave* OutputSoundRight = NewObject<USoundWave>(this, OutputSoundRightName);
-
-	if (OutputSoundLeft->ChannelOffsets.Num())
-	{
-		OutputSoundLeft->ChannelOffsets.Empty(SPEAKER_Count);
-		OutputSoundLeft->ChannelOffsets.AddZeroed(SPEAKER_Count);
-	}
-	if (OutputSoundLeft->ChannelSizes.Num())
-	{
-		OutputSoundLeft->ChannelSizes.Empty(SPEAKER_Count);
-		OutputSoundLeft->ChannelSizes.AddZeroed(SPEAKER_Count);
-	}
-	if (OutputSoundRight->ChannelOffsets.Num())
-	{
-		OutputSoundRight->ChannelOffsets.Empty(SPEAKER_Count);
-		OutputSoundRight->ChannelOffsets.AddZeroed(SPEAKER_Count);
-	}
-	if (OutputSoundRight->ChannelSizes.Num())
-	{
-		OutputSoundRight->ChannelSizes.Empty(SPEAKER_Count);
-		OutputSoundRight->ChannelSizes.AddZeroed(SPEAKER_Count);
-	}
-
-	
-	
-
-
+		);*/
 
 }

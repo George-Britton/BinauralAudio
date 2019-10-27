@@ -4,11 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "Engine.h"
 #include "Kismet/KismetMathLibrary.h"
-#include "TimerManager.h"
-#include "UObject/Package.h"
-//#include "Engine/Source/Editor/AudioEditor/Classes/Factories/SoundSurroundFactory.h"
+#include "Engine.h"
+#include "GameFramework/Character.h"
+#include "Factories/SoundSurroundFactory.h"
 #include "BinauralTestThree.generated.h"
 
 UENUM()
@@ -30,15 +29,12 @@ public:
 	// Audio component that plays the created audio
 	UPROPERTY()
 		UAudioComponent* AudioPlayer;
-	UPROPERTY()
-		UAudioComponent* AudioPlayerRight;
 	
 	// Audio to make binaural
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio")
 		USoundWave* Audio;
-	UPROPERTY()
-		USoundWave* RightAudio;
 
+	// Global positioning variables
 	UPROPERTY()
 		float Azimuth = 0;
 	UPROPERTY()
@@ -48,28 +44,29 @@ public:
 	UPROPERTY()
 		ECloserEar CloserEar = ECloserEar::EitherEar;
 
+	// The Base values for the sound modifications
 	UPROPERTY()
 		float BasePitch = 1;
 	UPROPERTY()
 		float BaseVolume = 1;
 	UPROPERTY()
 		TArray<float> DelayArray;
-
-	UPROPERTY()
-		FSoundAttenuationSettings AttenuationDetails;
 	
+	// Reference to the listener
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")
 		ACharacter* PlayerReference;
 
+	// Factory variables the create the output sound
 	UPROPERTY()
-		FTimerHandle EarTimer;
+		class USoundSurroundFactory* SoundSurroundFactory;
 	UPROPERTY()
-		FTimerDynamicDelegate EarDelegate;
+		UObject* FactorySound;
+	UPROPERTY()
+		uint8 Buffer;
 
+	// Sound to be played
 	UPROPERTY()
-		FTimerHandle PlayTimer;
-	UPROPERTY()
-		FTimerDynamicDelegate PlayDelegate;
+		USoundWave* OutputSound;
 
 protected:
 	// Called when the game starts or when spawned
@@ -87,7 +84,5 @@ public:
 		float GetRange();
 
 	UFUNCTION()
-		void PlayFirstEar();
-	UFUNCTION()
-		void PlaySecondEar();
+		void CreateSound();
 };
