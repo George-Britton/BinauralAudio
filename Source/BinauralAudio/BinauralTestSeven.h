@@ -4,12 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "GameFramework/Character.h"
 #include "Audio.h"
 #include "Engine.h"
 #include "Kismet/KismetMathLibrary.h"
-#include "Factories/ReimportSoundSurroundFactory.h"
-#include "BinauralTestFive.generated.h"
+#include "GameFramework/Character.h"
+#include "AudioMixerDevice.h"
+#include "BinauralTestSeven.generated.h"
 
 // Enum that stores the ear closest to the audio source
 UENUM()
@@ -20,13 +20,14 @@ enum class ECloserEar : uint8 {
 };
 
 UCLASS()
-class BINAURALAUDIO_API ABinauralTestFive : public AActor
+class BINAURALAUDIO_API ABinauralTestSeven : public AActor
 {
 	GENERATED_BODY()
-
-public:
+	
+public:	
 	// Sets default values for this actor's properties
-	ABinauralTestFive();
+	ABinauralTestSeven();
+
 
 	// Audio component that plays the created audio
 	UPROPERTY()
@@ -49,48 +50,41 @@ public:
 	// The Base values for the sound modifications
 	UPROPERTY()
 		float BasePitch = 1;
-	UPROPERTY()
-		float BaseVolume = 1;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		float Volume = 1;
 	UPROPERTY()
 		TArray<float> DelayArray;
+	UPROPERTY()
+		TArray<float> PitchArray;
+	UPROPERTY()
+		TArray<float> VolumeArray;
 
 	// Reference to the listener
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")
 		ACharacter* PlayerReference;
 
-	// Factory variables the create the output sound
+	// Time at which the sound needs to continue playing after parameters update
 	UPROPERTY()
-		USoundSurroundFactory* SoundSurroundFactory;
-	UPROPERTY()
-		UReimportSoundSurroundFactory* ReimportSoundSurroundFactory;
-	UPROPERTY()
-		UObject* FactorySound;
-	UPROPERTY()
-		USoundWave* LeftOutput;
-	UPROPERTY()
-		USoundWave* RightOutput;
-	UPROPERTY()
-		FString LeftFileName;
-	UPROPERTY()
-		FString RightFileName;
-	UPROPERTY()
-		TArray<FString> PathNames;
-	UPROPERTY()
-		TArray<FString> NewPathNames;
+		float PickUpTime = 0;
+	bool SoundPlaying = false;
 
-	// Values for the loading of the new sounds
-	uint8* Buffer;
-	uint8* BufferEnd;
+	// Mixer that hold the sound spatialisation settings
+	Audio::FMixerDevice MixerDevice;
+
+	// Buffer for output sound
+	Audio::AlignedFloatBuffer Buffer;
 	
-	// Sound to be played
-	UPROPERTY()
-		USoundWave* OutputSound;
+	// Wave instance to play
+	FWaveInstance* OutputSound;
 
+	// Final audio source to play
+	FSoundSource* SoundSource;
+	
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-public:
+public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
@@ -111,4 +105,5 @@ public:
 	// Plays the new binaural sound
 	UFUNCTION(BlueprintCallable, Category = "Audio")
 		void PlaySound();
+
 };

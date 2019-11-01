@@ -44,6 +44,9 @@ void ABinauralTestFive::BeginPlay()
 		else
 		{
 			CreateSound();
+			//Aaron: create the fecking reimport surround factory!
+			//ReimportSoundSurroundFactory = NewObject<UReimportSoundSurroundFactory>();
+			
 			/////////////////////////////////////////////////////
 			///				TO DO: HRTF CALCS				  ///
 			/////////////////////////////////////////////////////
@@ -116,16 +119,23 @@ void ABinauralTestFive::CreateSound()
 	LeftFileName.Append("Binaural_sl");
 	PathNames[0] = LeftFileName;
 
-
+	//make the fecking factory!
+	SoundSurroundFactory = NewObject<USoundSurroundFactory>();
+	
 	FString FinalPackageName = TEXT("/Game");
 	UPackage* Package = CreatePackage(NULL, *FinalPackageName);
 	USoundWave* left_sound = Cast<USoundWave>(SoundSurroundFactory->FactoryCreateNew(USoundWave::StaticClass(), Package->GetOutermost(), TEXT("Binaural_sl"), RF_Standalone | RF_Public, NULL, GWarn));
 	if(left_sound)
 	{
+		
 	}
 
-	USoundWave* right_sound = Cast<USoundWave>(SoundSurroundFactory->FactoryCreateNew(USoundWave::StaticClass(), Package->GetOutermost(), TEXT("Binaural_sl"), RF_Standalone | RF_Public, NULL, GWarn));
-
+	USoundWave* right_sound = Cast<USoundWave>(SoundSurroundFactory->FactoryCreateNew(USoundWave::StaticClass(), Package->GetOutermost(), TEXT("Binaural_sr"), RF_Standalone | RF_Public, NULL, GWarn));
+	if(right_sound)
+	{
+		
+	}
+	
 	/*LeftOutput = Cast<USoundWave>(SoundSurroundFactory->FactoryCreateBinary(
 		OutputSound->GetClass(),
 		Audio,
