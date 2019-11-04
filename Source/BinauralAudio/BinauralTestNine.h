@@ -9,7 +9,7 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "GameFramework/Character.h"
 #include "AudioMixerDevice.h"
-#include "BinauralTestEight.generated.h"
+#include "BinauralTestNine.generated.h"
 
 // Enum that stores the ear closest to the audio source
 UENUM()
@@ -20,13 +20,13 @@ enum class ECloserEar : uint8 {
 };
 
 UCLASS()
-class BINAURALAUDIO_API ABinauralTestEight : public AActor
+class BINAURALAUDIO_API ABinauralTestNine : public AActor
 {
 	GENERATED_BODY()
 	
 public:	
 	// Sets default values for this actor's properties
-	ABinauralTestEight();
+	ABinauralTestNine();
 
 
 	// Audio component that plays the created audio
@@ -79,8 +79,11 @@ public:
 	Audio::AlignedFloatBuffer Buffer;
 
 	// Active sound used for making the WaveInstance
-	FActiveSound ActiveSound;
+	FActiveSound* ActiveSound;
 	
+	// Sound base for initiating the active sound
+	USoundBase* SoundBase;
+
 	// Wave instances to play
 	FWaveInstance* LeftSound;
 	FWaveInstance* RightSound;
