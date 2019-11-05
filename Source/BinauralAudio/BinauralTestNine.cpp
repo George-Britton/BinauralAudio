@@ -51,8 +51,8 @@ void ABinauralTestNine::BeginPlay()
 		FWaveInstance::FWaveInstance(*RightSound);
 		ActiveSound.SetSound(Audio);	
 		ActiveSound.bAllowSpatialization = true;
-		if (Audio->GetFullName().Contains("wav")) {CreateSound();}
-		else {GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, Audio->GetFullName() + ": must be .wav filetype");}
+		if (Audio->GetFullName().Contains("wav")) CreateSound();
+		else GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, Audio->GetFullName() + ": must be .wav filetype");
 	}
 }
 
