@@ -11,6 +11,8 @@
 #include "AudioMixerDevice.h"
 #include "BinauralTestNine.generated.h"
 
+struct FWaveInstance;
+
 // Enum that stores the ear closest to the audio source
 UENUM()
 enum class ECloserEar : uint8 {
@@ -79,10 +81,7 @@ public:
 	Audio::AlignedFloatBuffer Buffer;
 
 	// Active sound used for making the WaveInstance
-	FActiveSound* ActiveSound;
-	
-	// Sound base for initiating the active sound
-	USoundBase* SoundBase;
+	FActiveSound ActiveSound;
 
 	// Wave instances to play
 	FWaveInstance* LeftSound;

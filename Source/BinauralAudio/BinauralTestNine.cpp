@@ -47,10 +47,10 @@ void ABinauralTestNine::BeginPlay()
 
 	if (Audio)
 	{
-		SoundBase = NewObject<USoundBase>();
-		FActiveSound::FActiveSound();
-		//ActiveSound->FActiveSound::FActiveSound();
-		ActiveSound->SetSound(SoundBase);
+		FWaveInstance::FWaveInstance(*LeftSound);
+		FWaveInstance::FWaveInstance(*RightSound);
+		ActiveSound.SetSound(Audio);	
+		ActiveSound.bAllowSpatialization = true;
 		if (Audio->GetFullName().Contains("wav")) {CreateSound();}
 		else {GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, Audio->GetFullName() + ": must be .wav filetype");}
 	}
@@ -59,6 +59,7 @@ void ABinauralTestNine::BeginPlay()
 // Called every frame
 void ABinauralTestNine::Tick(float DeltaTime)
 {
+	// Play timer for sound source
 	if (SoundPlaying && !LeftSound->bIsFinished && !RightSound->bIsFinished) PickUpTime += DeltaTime;
 	else if (LeftSound->bIsFinished && RightSound->bIsFinished) PickUpTime = -1;
 }
@@ -111,6 +112,8 @@ void ABinauralTestNine::CreateSound()
 	Buffer.Reset();
 
 	// Sets the spatialisation settings for the left and right wave instances
+	ActiveSound.AddWaveInstance(LeftSound->WaveInstanceHash);
+	ActiveSound.AddWaveInstance(RightSound->WaveInstanceHash);
 	WaveInstanceSetup(LeftSound, ECloserEar::LeftEar);
 	WaveInstanceSetup(RightSound, ECloserEar::RightEar);
 	
@@ -123,10 +126,10 @@ void ABinauralTestNine::CreateSound()
 void ABinauralTestNine::WaveInstanceSetup(FWaveInstance* WaveToMod, ECloserEar SideEar)
 {
 	// Sets the default sound and spatialisation variables
-	WaveToMod->ActiveSound = ActiveSound;
 	WaveToMod->WaveData = Audio;
 	WaveToMod->SetUseSpatialization(true);
 	WaveToMod->Location = PlayerReference->GetActorLocation();
+	WaveToMod->ListenerToSoundDistanceForPanning = GetRange();
 
 	// Gets the correct volume, pitch and time differences for each ear's sound
 	if (CloserEar == SideEar)
