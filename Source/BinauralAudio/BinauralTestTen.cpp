@@ -2,7 +2,6 @@
 
 #include "BinauralTestTen.h"
 
-
 // Sets default values
 ABinauralTestTen::ABinauralTestTen()
 {
@@ -49,9 +48,9 @@ void ABinauralTestTen::BeginPlay()
 	if (Audio)
 	{
 		// Creates the MixerDevice that holds the sound modifications
-		Audio::FMixerPlatformXAudio2* MixerInterfacePtr = new Audio::FMixerPlatformXAudio2();
+		//Audio::IAudioMixerPlatformInterface* MixerInterfacePtr = new Audio::FMixerPlatformXAudio2;
 		//MixerInterfacePtr = &MixerInterface;
-		MixerDevice = new Audio::FMixerDevice(MixerInterfacePtr);
+		MixerDevice = new Audio::FMixerDevice(new Audio::FMixerPlatformXAudio2);
 
 		// Creates new WaveInstances that play the spatialised sound
 		UPTRINT LeftHash = 0;

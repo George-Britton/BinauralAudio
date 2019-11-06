@@ -13,7 +13,6 @@
 #include "Private/AudioMixerPlatformXAudio2.h"
 #include "BinauralTestTen.generated.h"
 
-class FMixerPlatformXAudio2;
 struct FWaveInstance;
 
 // Enum that stores the ear closest to the audio source
@@ -80,15 +79,10 @@ public:
 	// Buffer for output sound
 	Audio::AlignedFloatBuffer Buffer;
 
-	// Interface for the mixer
-	Audio::IAudioMixerPlatformInterface* MixerInterfacePtr;
-
 	// Active sound used for making the WaveInstance
 	FActiveSound ActiveSound;
 
 	// Wave instances to play
-	//FWaveInstance LeftSound;
-	//FWaveInstance RightSound;
 	FWaveInstance* LeftSoundPtr;
 	FWaveInstance* RightSoundPtr;
 
