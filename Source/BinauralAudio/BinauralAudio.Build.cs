@@ -8,6 +8,9 @@ public class BinauralAudio : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "HeadMountedDisplay", "AudioMixer"});
+        PrivateDependencyModuleNames.AddRange(new string[] {"DX11Audio"});
+
+        PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "HeadMountedDisplay", "AudioMixer", "AudioMixerXAudio2" });
 	}
+
 }

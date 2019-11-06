@@ -1,11 +1,12 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "BinauralTestNine.h"
+#include "BinauralTestTen.h"
+
 
 // Sets default values
-ABinauralTestNine::ABinauralTestNine()
+ABinauralTestTen::ABinauralTestTen()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
 	AudioPlayer = CreateDefaultSubobject<UAudioComponent>(TEXT("Audio Player"));
@@ -41,45 +42,59 @@ ABinauralTestNine::ABinauralTestNine()
 }
 
 // Called when the game starts or when spawned
-void ABinauralTestNine::BeginPlay()
+void ABinauralTestTen::BeginPlay()
 {
 	Super::BeginPlay();
 
 	if (Audio)
 	{
-		FWaveInstance::FWaveInstance(*LeftSound);
-		FWaveInstance::FWaveInstance(*RightSound);
-		ActiveSound.SetSound(Audio);	
+		// Creates the MixerDevice that holds the sound modifications
+		Audio::FMixerPlatformXAudio2* MixerInterfacePtr = new Audio::FMixerPlatformXAudio2();
+		//MixerInterfacePtr = &MixerInterface;
+		MixerDevice = new Audio::FMixerDevice(MixerInterfacePtr);
+
+		// Creates new WaveInstances that play the spatialised sound
+		UPTRINT LeftHash = 0;
+		UPTRINT RightHash = 0;
+		FWaveInstance LeftSound = FWaveInstance::FWaveInstance(LeftHash, ActiveSound);
+		FWaveInstance RightSound = FWaveInstance::FWaveInstance(RightHash, ActiveSound);
+		LeftSoundPtr = &LeftSound;
+		RightSoundPtr = &RightSound;
+
+		// Creates the ActiveSound that will hold the WaveInstances
+		ActiveSound.SetSound(Audio);
 		ActiveSound.bAllowSpatialization = true;
+
+		// Initialises the spatialisation
 		if (Audio->GetFullName().Contains("wav")) CreateSound();
 		else GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, Audio->GetFullName() + ": must be .wav filetype");
 	}
 }
 
 // Called every frame
-void ABinauralTestNine::Tick(float DeltaTime)
+void ABinauralTestTen::Tick(float DeltaTime)
 {
 	// Play timer for sound source
-	if (SoundPlaying && !LeftSound->bIsFinished && !RightSound->bIsFinished) PickUpTime += DeltaTime;
-	else if (LeftSound->bIsFinished && RightSound->bIsFinished) PickUpTime = -1;
+	if (SoundPlaying && !LeftSoundPtr->bIsFinished && !RightSoundPtr->bIsFinished) PickUpTime += DeltaTime;
+	else if (LeftSoundPtr->bIsFinished && RightSoundPtr->bIsFinished) PickUpTime = -1;
 }
 
 // Calculates Range between audio source and player
-float ABinauralTestNine::GetRange()
+float ABinauralTestTen::GetRange()
 {
 	Range = FVector::Dist(this->GetActorLocation(), PlayerReference->GetActorLocation());
 	return Range;
 }
 
 // Calculates Elevation of audio source relative to player
-float ABinauralTestNine::GetElevation()
+float ABinauralTestTen::GetElevation()
 {
 	Elevation = FMath::Sin((this->GetActorLocation().Z - PlayerReference->GetTransform().GetLocation().Z) / Range);
 	return Elevation;
 }
 
 // Calculates Azimuth of audio source around player
-float ABinauralTestNine::GetAzimuth()
+float ABinauralTestTen::GetAzimuth()
 {
 	FVector ForwardPoint = PlayerReference->GetActorForwardVector();
 	ForwardPoint.Z = 0;
@@ -105,25 +120,25 @@ float ABinauralTestNine::GetAzimuth()
 }
 
 // Generates the output sound
-void ABinauralTestNine::CreateSound()
+void ABinauralTestTen::CreateSound()
 {
 	// Makes sure the Audio channels and buffer are ready
 	Audio->NumChannels = 2;
 	Buffer.Reset();
 
 	// Sets the spatialisation settings for the left and right wave instances
-	ActiveSound.AddWaveInstance(LeftSound->WaveInstanceHash);
-	ActiveSound.AddWaveInstance(RightSound->WaveInstanceHash);
-	WaveInstanceSetup(LeftSound, ECloserEar::LeftEar);
-	WaveInstanceSetup(RightSound, ECloserEar::RightEar);
-	
+	ActiveSound.AddWaveInstance(LeftSoundPtr->WaveInstanceHash);
+	ActiveSound.AddWaveInstance(RightSoundPtr->WaveInstanceHash);
+	WaveInstanceSetup(LeftSoundPtr, ECloserEar::LeftEar);
+	WaveInstanceSetup(RightSoundPtr, ECloserEar::RightEar);
+
 	// Creates the sound source from the generated buffer
 	MixerDevice->MaxChannels = 2;
 	SoundSource = MixerDevice->CreateSoundSource();
 }
 
 // Sets up the Wave Instance variables
-void ABinauralTestNine::WaveInstanceSetup(FWaveInstance* WaveToMod, ECloserEar SideEar)
+void ABinauralTestTen::WaveInstanceSetup(FWaveInstance* WaveToMod, ECloserEar SideEar)
 {
 	// Sets the default sound and spatialisation variables
 	WaveToMod->WaveData = Audio;
@@ -137,22 +152,26 @@ void ABinauralTestNine::WaveInstanceSetup(FWaveInstance* WaveToMod, ECloserEar S
 		WaveToMod->Pitch = BasePitch;
 		WaveToMod->SetVolumeMultiplier(Volume);
 		WaveToMod->StartTime = PickUpTime;
-	} else
+	}
+	else
 	{
 		WaveToMod->Pitch = BasePitch - PitchArray[FMath::FloorToInt(GetAzimuth())];
 		WaveToMod->SetVolumeMultiplier(Volume - VolumeArray[FMath::FloorToInt(GetAzimuth())]);
 		WaveToMod->StartTime = PickUpTime - DelayArray[FMath::FloorToInt(GetAzimuth())];
 	}
 
+	// Stereo channel format
+	ESubmixChannelFormat ChannelFormat = ESubmixChannelFormat::Stereo;
+
 	// Adds wave instance to the buffer
 	if (SideEar == ECloserEar::LeftEar)
-	MixerDevice->Get3DChannelMap(ChannelFormat, WaveToMod, 360 - GetAzimuth(), WaveToMod->GetUseSpatialization(), Buffer);
+		MixerDevice->Get3DChannelMap(ChannelFormat, WaveToMod, 360 - GetAzimuth(), WaveToMod->GetUseSpatialization(), Buffer);
 	else
-	MixerDevice->Get3DChannelMap(ChannelFormat, WaveToMod, GetAzimuth(), WaveToMod->GetUseSpatialization(), Buffer);
+		MixerDevice->Get3DChannelMap(ChannelFormat, WaveToMod, GetAzimuth(), WaveToMod->GetUseSpatialization(), Buffer);
 }
 
 // Plays the new binaural sound
-void ABinauralTestNine::PlaySound()
+void ABinauralTestTen::PlaySound()
 {
 	SoundSource->Play();
 }

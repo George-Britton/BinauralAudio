@@ -6,11 +6,14 @@
 #include "GameFramework/Actor.h"
 #include "Audio.h"
 #include "Engine.h"
-#include "Kismet/KismetMathLibrary.h"
-#include "GameFramework/Character.h"
+#include "Kismet\KismetMathLibrary.h"
+#include "GameFramework\Character.h"
 #include "AudioMixerDevice.h"
-#include "BinauralTestNine.generated.h"
+#include "AudioMixer.h"
+#include "Private/AudioMixerPlatformXAudio2.h"
+#include "BinauralTestTen.generated.h"
 
+class FMixerPlatformXAudio2;
 struct FWaveInstance;
 
 // Enum that stores the ear closest to the audio source
@@ -21,14 +24,15 @@ enum class ECloserEar : uint8 {
 	EitherEar UMETA(DisplayName = "Either Ear")
 };
 
+// Class that holds the binaural synthesizer
 UCLASS()
-class BINAURALAUDIO_API ABinauralTestNine : public AActor
+class BINAURALAUDIO_API ABinauralTestTen : public AActor
 {
 	GENERATED_BODY()
-	
-public:	
+
+public:
 	// Sets default values for this actor's properties
-	ABinauralTestNine();
+	ABinauralTestTen();
 
 
 	// Audio component that plays the created audio
@@ -70,31 +74,32 @@ public:
 		float PickUpTime = 0;
 	bool SoundPlaying = false;
 
-
-	// Stereo channel format
-	ESubmixChannelFormat ChannelFormat = ESubmixChannelFormat::Stereo;
-
 	// Mixer that hold the sound spatialisation settings
 	Audio::FMixerDevice* MixerDevice;
 
 	// Buffer for output sound
 	Audio::AlignedFloatBuffer Buffer;
 
+	// Interface for the mixer
+	Audio::IAudioMixerPlatformInterface* MixerInterfacePtr;
+
 	// Active sound used for making the WaveInstance
 	FActiveSound ActiveSound;
 
 	// Wave instances to play
-	FWaveInstance* LeftSound;
-	FWaveInstance* RightSound;
+	//FWaveInstance LeftSound;
+	//FWaveInstance RightSound;
+	FWaveInstance* LeftSoundPtr;
+	FWaveInstance* RightSoundPtr;
 
 	// Final audio source to play
 	FSoundSource* SoundSource;
-	
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-public:	
+public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
