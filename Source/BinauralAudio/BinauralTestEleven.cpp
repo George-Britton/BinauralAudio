@@ -8,30 +8,16 @@ ABinauralTestEleven::ABinauralTestEleven()
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
-	for (int32 AudioPlayerSetup = 0; AudioPlayerSetup < BinauralSynthesizer.Num(); AudioPlayerSetup++)
-	{
-		BinauralSynthesizer[AudioPlayerSetup].AudioPlayer = CreateDefaultSubobject<UAudioComponent>(TEXT("Audio Player"));
-		BinauralSynthesizer[AudioPlayerSetup].AudioPlayer->SetupAttachment(this->RootComponent);
-	}
-
-	// Inits the arrays for the HRTF calculations and file paths
-	FHRTFMaximums* HRTFMaximums;
-	int8 ElevationCounter = 0;
-	InitialiseHRTFs(HRTF_Minus20Degrees, ElevationCounter, HRTFMaximums->MaximumDelayOffsets.Minus20Degrees, HRTFMaximums->MaximumPitchOffsets.Minus20Degrees, HRTFMaximums->MaximumVolumeOffsets.Minus20Degrees);
-	InitialiseHRTFs(HRTF_Minus10Degrees, ElevationCounter++, HRTFMaximums->MaximumDelayOffsets.Minus10Degrees, HRTFMaximums->MaximumPitchOffsets.Minus10Degrees, HRTFMaximums->MaximumVolumeOffsets.Minus10Degrees);
-	InitialiseHRTFs(HRTF_0Degrees, ElevationCounter++, HRTFMaximums->MaximumDelayOffsets.At0Degrees, HRTFMaximums->MaximumPitchOffsets.At0Degrees, HRTFMaximums->MaximumVolumeOffsets.At0Degrees);
-	InitialiseHRTFs(HRTF_Positive10Degrees, ElevationCounter++, HRTFMaximums->MaximumDelayOffsets.Positive10Degrees, HRTFMaximums->MaximumPitchOffsets.Positive10Degrees, HRTFMaximums->MaximumVolumeOffsets.Positive10Degrees);
-	InitialiseHRTFs(HRTF_Positive20Degrees, ElevationCounter++, HRTFMaximums->MaximumDelayOffsets.Positive20Degrees, HRTFMaximums->MaximumPitchOffsets.Positive20Degrees, HRTFMaximums->MaximumVolumeOffsets.Positive20Degrees);
 }
 
 // Called when the HRTF arrays are initialised
-void ABinauralTestEleven::InitialiseHRTFs(TArray<FHRTFValuesBasedOnElevation> HRTFArray, int8 ElevationIncrementer, float MaxDelay, float MaxPitch, float MaxVolume)
+TArray<FHRTFValuesBasedOnElevation> ABinauralTestEleven::InitialiseHRTFs(float MaxDelay, float MaxPitch, float MaxVolume)
 {
-	FHRTFValuesBasedOnElevation DegreeFiller;
-	HRTFArray.Init(DegreeFiller, 360);
-	float DelayFiller;
-	float PitchFiller;
-	float VolumeFiller;
+	TArray<FHRTFValuesBasedOnElevation> HRTFArray;
+	HRTFArray.SetNum(360);
+	float DelayFiller = 0;
+	float PitchFiller = 0;
+	float VolumeFiller = 0;
 	
 	// Fills the spatialisation arrays with sub-second delay values, Hz differences, and dB offsets
 	for(int8 AzimuthCounter = 0; AzimuthCounter < 90; AzimuthCounter++)
@@ -51,8 +37,33 @@ void ABinauralTestEleven::InitialiseHRTFs(TArray<FHRTFValuesBasedOnElevation> HR
 		
 		DelayFiller += MaxDelay / 90;
 		PitchFiller += MaxPitch / 90;
-		VolumeFiller += MaxVolume / 90; break;
+		VolumeFiller += MaxVolume / 90;
 	}
+
+	return HRTFArray;
+}
+
+// Called when a value is changed
+void ABinauralTestEleven::OnConstruction(const FTransform& Transform)
+{
+	Super::OnConstruction(Transform);
+	// Creates the audio components and attaches them to the root
+	for (int32 AudioPlayerSetup = 0; AudioPlayerSetup < BinauralSynthesizer.Num(); AudioPlayerSetup++)
+	{
+		BinauralSynthesizer[AudioPlayerSetup].AudioPlayer = NewObject<UAudioComponent>(this);
+		BinauralSynthesizer[AudioPlayerSetup].AudioPlayer->SetupAttachment(this->RootComponent);
+	}
+
+	// Inits the arrays for the HRTF calculations and file paths
+	FHRTFMaximums HRTFMaximums;
+	GEngine->AddOnScreenDebugMessage(-1, 5, FColor::Yellow, FString::SanitizeFloat(HRTFMaximums.MaximumDelayOffsets.At0Degrees));
+	HRTF_Minus20Degrees = InitialiseHRTFs(HRTFMaximums.MaximumDelayOffsets.Minus20Degrees, HRTFMaximums.MaximumPitchOffsets.Minus20Degrees, HRTFMaximums.MaximumVolumeOffsets.Minus20Degrees);
+	//GEngine->AddOnScreenDebugMessage(-1, 5, FColor::Yellow, FString::SanitizeFloat(HRTF_Minus20Degrees[89].VolumeOffset));
+	//This just printed 0, so the arrays aren't filling
+	HRTF_Minus10Degrees = InitialiseHRTFs(HRTFMaximums.MaximumDelayOffsets.Minus10Degrees, HRTFMaximums.MaximumPitchOffsets.Minus10Degrees, HRTFMaximums.MaximumVolumeOffsets.Minus10Degrees);
+	HRTF_0Degrees = InitialiseHRTFs(HRTFMaximums.MaximumDelayOffsets.At0Degrees, HRTFMaximums.MaximumPitchOffsets.At0Degrees, HRTFMaximums.MaximumVolumeOffsets.At0Degrees);
+	HRTF_Positive10Degrees = InitialiseHRTFs(HRTFMaximums.MaximumDelayOffsets.Positive10Degrees, HRTFMaximums.MaximumPitchOffsets.Positive10Degrees, HRTFMaximums.MaximumVolumeOffsets.Positive10Degrees);
+	HRTF_Positive20Degrees = InitialiseHRTFs(HRTFMaximums.MaximumDelayOffsets.Positive20Degrees, HRTFMaximums.MaximumPitchOffsets.Positive20Degrees, HRTFMaximums.MaximumVolumeOffsets.Positive20Degrees);
 }
 
 // Called when the game starts or when spawned
@@ -65,21 +76,17 @@ void ABinauralTestEleven::BeginPlay()
 		if (BinauralSynthesizer[BeginPlayLooper].Audio)
 		{
 			// Creates the MixerDevice that holds the sound modifications
-			//Audio::IAudioMixerPlatformInterface* MixerInterfacePtr = new Audio::FMixerPlatformXAudio2;
-			//BinauralSynthesizer[BeginPlayLooper].MixerInterfacePtr = &MixerInterface;
-			BinauralSynthesizer[BeginPlayLooper].MixerDevice = new Audio::FMixerDevice(new Audio::FMixerPlatformXAudio2);
+			BinauralSynthesizer[BeginPlayLooper].MixerDevice = static_cast<Audio::FMixerDevice*>(GEngine->GetMainAudioDevice());
 
+			// Creates the ActiveSound that will hold the WaveInstances
+			BinauralSynthesizer[BeginPlayLooper].ActiveSound->SetSound(BinauralSynthesizer[BeginPlayLooper].Audio);
+			BinauralSynthesizer[BeginPlayLooper].ActiveSound->bAllowSpatialization = true;
+			
 			// Creates new WaveInstances that play the spatialised sound
 			UPTRINT LeftHash = 0;
 			UPTRINT RightHash = 0;
-			FWaveInstance LeftSound = FWaveInstance::FWaveInstance(LeftHash, BinauralSynthesizer[BeginPlayLooper].ActiveSound);
-			FWaveInstance RightSound = FWaveInstance::FWaveInstance(RightHash, BinauralSynthesizer[BeginPlayLooper].ActiveSound);
-			BinauralSynthesizer[BeginPlayLooper].LeftSoundPtr = &LeftSound;
-			BinauralSynthesizer[BeginPlayLooper].RightSoundPtr = &RightSound;
-
-			// Creates the ActiveSound that will hold the WaveInstances
-			BinauralSynthesizer[BeginPlayLooper].ActiveSound.SetSound(BinauralSynthesizer[BeginPlayLooper].Audio);
-			BinauralSynthesizer[BeginPlayLooper].ActiveSound.bAllowSpatialization = true;
+			BinauralSynthesizer[BeginPlayLooper].LeftSoundPtr = new FWaveInstance(LeftHash, *BinauralSynthesizer[BeginPlayLooper].ActiveSound);
+			BinauralSynthesizer[BeginPlayLooper].RightSoundPtr = new FWaveInstance(RightHash, *BinauralSynthesizer[BeginPlayLooper].ActiveSound);
 
 			// Initialises the spatialisation
 			if (BinauralSynthesizer[BeginPlayLooper].Audio->GetFullName().Contains("wav")) CreateSound(BeginPlayLooper);
@@ -95,23 +102,27 @@ void ABinauralTestEleven::Tick(float DeltaTime)
 	for (int32 IsPlayingLooper = 0; IsPlayingLooper < BinauralSynthesizer.Num(); IsPlayingLooper++)
 	{
 		if (BinauralSynthesizer[IsPlayingLooper].SoundPlaying && !BinauralSynthesizer[IsPlayingLooper].LeftSoundPtr->bIsFinished && !BinauralSynthesizer[IsPlayingLooper].RightSoundPtr->bIsFinished)
+		{
 			BinauralSynthesizer[IsPlayingLooper].PickUpTime += DeltaTime;
+		}
 		else if (BinauralSynthesizer[IsPlayingLooper].LeftSoundPtr->bIsFinished && BinauralSynthesizer[IsPlayingLooper].RightSoundPtr->bIsFinished)
+		{
 			BinauralSynthesizer[IsPlayingLooper].PickUpTime = -1;
+		}
 	}
 }
 
 // Calculates Range between audio source and player
 float ABinauralTestEleven::GetRange(int32 Index)
 {
-	BinauralSynthesizer[Index].Range = FVector::Dist(this->GetActorLocation(), BinauralSynthesizer[Index].PlayerReference->GetActorLocation());
+	BinauralSynthesizer[Index].Range = FVector::Dist(BinauralSynthesizer[Index].AudioSource->GetActorLocation(), BinauralSynthesizer[Index].PlayerReference->GetActorLocation());
 	return BinauralSynthesizer[Index].Range;
 }
 
 // Calculates Elevation of audio source relative to player
 float ABinauralTestEleven::GetElevation(int32 Index)
 {
-	BinauralSynthesizer[Index].Elevation = FMath::Sin((this->GetActorLocation().Z - BinauralSynthesizer[Index].PlayerReference->GetTransform().GetLocation().Z) / BinauralSynthesizer[Index].Range);
+	BinauralSynthesizer[Index].Elevation = FMath::Sin((BinauralSynthesizer[Index].AudioSource->GetActorLocation().Z - BinauralSynthesizer[Index].PlayerReference->GetTransform().GetLocation().Z) / BinauralSynthesizer[Index].Range);
 	return BinauralSynthesizer[Index].Elevation;
 }
 
@@ -149,14 +160,14 @@ void ABinauralTestEleven::CreateSound(int32 Index)
 	BinauralSynthesizer[Index].Buffer.Reset();
 
 	// Sets the spatialisation settings for the left and right wave instances
-	BinauralSynthesizer[Index].ActiveSound.AddWaveInstance(BinauralSynthesizer[Index].LeftSoundPtr->WaveInstanceHash);
-	BinauralSynthesizer[Index].ActiveSound.AddWaveInstance(BinauralSynthesizer[Index].RightSoundPtr->WaveInstanceHash);
+	BinauralSynthesizer[Index].ActiveSound->AddWaveInstance(BinauralSynthesizer[Index].LeftSoundPtr->WaveInstanceHash);
+	BinauralSynthesizer[Index].ActiveSound->AddWaveInstance(BinauralSynthesizer[Index].RightSoundPtr->WaveInstanceHash);
 	WaveInstanceSetup(Index, BinauralSynthesizer[Index].LeftSoundPtr, ECloserEar::LeftEar);
 	WaveInstanceSetup(Index, BinauralSynthesizer[Index].RightSoundPtr, ECloserEar::RightEar);
 
 	// Creates the sound source from the generated buffer
 	BinauralSynthesizer[Index].MixerDevice->MaxChannels = 2;
-	BinauralSynthesizer[Index].SoundSource = BinauralSynthesizer[Index].MixerDevice->CreateSoundSource();
+	BinauralSynthesizer[Index].SoundSource = BinauralSynthesizer[Index].MixerDevice->CreateSoundSource();	
 }
 
 // Sets up the Wave Instance variables
@@ -164,7 +175,6 @@ void ABinauralTestEleven::WaveInstanceSetup(int32 Index, FWaveInstance* WaveToMo
 {
 	// Sets the default sound and spatialisation variables
 	WaveToMod->WaveData = BinauralSynthesizer[Index].Audio;
-	WaveToMod->SetUseSpatialization(true);
 	WaveToMod->Location = BinauralSynthesizer[Index].PlayerReference->GetActorLocation();
 	WaveToMod->ListenerToSoundDistanceForPanning = GetRange(Index);
 
@@ -190,56 +200,58 @@ void ABinauralTestEleven::WaveInstanceSetup(int32 Index, FWaveInstance* WaveToMo
 		BinauralSynthesizer[Index].MixerDevice->Get3DChannelMap(ChannelFormat, WaveToMod, 360 - GetAzimuth(Index), WaveToMod->GetUseSpatialization(), BinauralSynthesizer[Index].Buffer);
 	else
 		BinauralSynthesizer[Index].MixerDevice->Get3DChannelMap(ChannelFormat, WaveToMod, GetAzimuth(Index), WaveToMod->GetUseSpatialization(), BinauralSynthesizer[Index].Buffer);
+	
 }
 
 // Finds the correct offsets from the arrays
 float ABinauralTestEleven::FindOffset(int32 Index, EHRTFPoint DataPoint)
 {
-	float TestingElevation = GetElevation(Index) / 10;
+	// Tests the azimuth to see which Elevation array is closest to the required value
+	float TestingElevation = GetElevation(Index);
 
-	if (TestingElevation < -1.5)
+	if (TestingElevation < -15)
 	{
 		switch (DataPoint)
 		{
-		case EHRTFPoint::Delay: return HRTF_Minus20Degrees[GetAzimuth(Index)].DelayOffset; break;
-		case EHRTFPoint::Pitch: return HRTF_Minus20Degrees[GetAzimuth(Index)].PitchOffset; break;
-		case EHRTFPoint::Volume: return HRTF_Minus20Degrees[GetAzimuth(Index)].VolumeOffset; break;
+		case EHRTFPoint::Delay: return HRTF_Minus20Degrees[GetAzimuth(Index)].DelayOffset;
+		case EHRTFPoint::Pitch: return HRTF_Minus20Degrees[GetAzimuth(Index)].PitchOffset;
+		case EHRTFPoint::Volume: return HRTF_Minus20Degrees[GetAzimuth(Index)].VolumeOffset;
 		default: break;
 		}
-	}else if (TestingElevation >= -1.5 && TestingElevation < -0.5)
+	}else if (TestingElevation >= -15 && TestingElevation < -5)
 	{
 		switch (DataPoint)
 		{
-		case EHRTFPoint::Delay: return HRTF_Minus10Degrees[GetAzimuth(Index)].DelayOffset; break;
-		case EHRTFPoint::Pitch: return HRTF_Minus10Degrees[GetAzimuth(Index)].PitchOffset; break;
-		case EHRTFPoint::Volume: return HRTF_Minus10Degrees[GetAzimuth(Index)].VolumeOffset; break;
+		case EHRTFPoint::Delay: return HRTF_Minus10Degrees[GetAzimuth(Index)].DelayOffset;
+		case EHRTFPoint::Pitch: return HRTF_Minus10Degrees[GetAzimuth(Index)].PitchOffset;
+		case EHRTFPoint::Volume: return HRTF_Minus10Degrees[GetAzimuth(Index)].VolumeOffset;
 		default: break;
 		}
-	}else if (TestingElevation >= 0.5 && TestingElevation <= 0.5)
+	}else if (TestingElevation >= 5 && TestingElevation <= 5)
 	{
 		switch (DataPoint)
 		{
-		case EHRTFPoint::Delay: return HRTF_0Degrees[GetAzimuth(Index)].DelayOffset; break;
-		case EHRTFPoint::Pitch: return HRTF_0Degrees[GetAzimuth(Index)].PitchOffset; break;
-		case EHRTFPoint::Volume: return HRTF_0Degrees[GetAzimuth(Index)].VolumeOffset; break;
+		case EHRTFPoint::Delay: return HRTF_0Degrees[GetAzimuth(Index)].DelayOffset;
+		case EHRTFPoint::Pitch: return HRTF_0Degrees[GetAzimuth(Index)].PitchOffset;
+		case EHRTFPoint::Volume: return HRTF_0Degrees[GetAzimuth(Index)].VolumeOffset;
 		default: break;
 		}
-	}else if (TestingElevation <= 1.5 && TestingElevation > 0.5)
+	}else if (TestingElevation <= 15 && TestingElevation > 5)
 	{
 		switch (DataPoint)
 		{
-		case EHRTFPoint::Delay: return HRTF_Positive10Degrees[GetAzimuth(Index)].DelayOffset; break;
-		case EHRTFPoint::Pitch: return HRTF_Positive10Degrees[GetAzimuth(Index)].PitchOffset; break;
-		case EHRTFPoint::Volume: return HRTF_Positive10Degrees[GetAzimuth(Index)].VolumeOffset; break;
+		case EHRTFPoint::Delay: return HRTF_Positive10Degrees[GetAzimuth(Index)].DelayOffset;
+		case EHRTFPoint::Pitch: return HRTF_Positive10Degrees[GetAzimuth(Index)].PitchOffset;
+		case EHRTFPoint::Volume: return HRTF_Positive10Degrees[GetAzimuth(Index)].VolumeOffset;
 		default: break;
 		}
-	} else if (TestingElevation > 1.5)
+	} else if (TestingElevation > 15)
 	{
 		switch (DataPoint)
 		{
-		case EHRTFPoint::Delay: return HRTF_Positive20Degrees[GetAzimuth(Index)].DelayOffset; break;
-		case EHRTFPoint::Pitch: return HRTF_Positive20Degrees[GetAzimuth(Index)].PitchOffset; break;
-		case EHRTFPoint::Volume: return HRTF_Positive20Degrees[GetAzimuth(Index)].VolumeOffset; break;
+		case EHRTFPoint::Delay: return HRTF_Positive20Degrees[GetAzimuth(Index)].DelayOffset;
+		case EHRTFPoint::Pitch: return HRTF_Positive20Degrees[GetAzimuth(Index)].PitchOffset;
+		case EHRTFPoint::Volume: return HRTF_Positive20Degrees[GetAzimuth(Index)].VolumeOffset;
 		default: break;
 		}
 	}

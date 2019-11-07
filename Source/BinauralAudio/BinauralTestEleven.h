@@ -9,11 +9,11 @@
 #include "Kismet\KismetMathLibrary.h"
 #include "GameFramework\Character.h"
 #include "AudioMixerDevice.h"
-#include "AudioMixer.h"
-#include "Private/AudioMixerPlatformXAudio2.h"
+#include "Private\AudioMixerPlatformXAudio2.h"
 #include "BinauralTestEleven.generated.h"
 
 struct FWaveInstance;
+struct FActiveSound;
 
 // Enum that stores the three critical data points
 UENUM()
@@ -125,11 +125,11 @@ USTRUCT(BlueprintType)
 struct FHRTFValuesBasedOnElevation
 {
 	GENERATED_BODY()
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere)
 		float DelayOffset;
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere)
 		float PitchOffset;
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere)
 		float VolumeOffset;
 	FHRTFValuesBasedOnElevation()
 	{
@@ -139,7 +139,7 @@ struct FHRTFValuesBasedOnElevation
 	}
 };
 
-// Struct that holds the binaural synthesizing variables for each ausio source in the array
+// Struct that holds the binaural synthesizing variables for each audio source in the array
 USTRUCT(BlueprintType)
 struct FBinauralSynthesizer
 {
@@ -167,23 +167,23 @@ struct FBinauralSynthesizer
 
 		// The Base values for the sound modifications
 		UPROPERTY()
-			float BasePitch = 1;
+			float BasePitch;
 		UPROPERTY(EditAnywhere, BlueprintReadWrite)
-			float Volume = 1;
+			float Volume;
 
 		// Global positioning variables
 		UPROPERTY()
-			float Azimuth = 0;
+			float Azimuth;
 		UPROPERTY()
-			float Elevation = 0;
+			float Elevation;
 		UPROPERTY()
-			float Range = 0;
+			float Range;
 		UPROPERTY()
-			ECloserEar CloserEar = ECloserEar::EitherEar;
+			ECloserEar CloserEar;
 
 		// Time at which the sound needs to continue playing after parameters update
 		UPROPERTY()
-			float PickUpTime = 0;
+			float PickUpTime;
 		bool SoundPlaying = false;
 
 		// Mixer that hold the sound spatialisation settings
@@ -193,7 +193,7 @@ struct FBinauralSynthesizer
 		Audio::AlignedFloatBuffer Buffer;
 
 		// Active sound used for making the WaveInstance
-		FActiveSound ActiveSound;
+		FActiveSound* ActiveSound;
 
 		// Wave instances to play
 		FWaveInstance* LeftSoundPtr;
@@ -202,6 +202,29 @@ struct FBinauralSynthesizer
 		// Final audio source to play
 		FSoundSource* SoundSource;
 
+		FBinauralSynthesizer()
+		{
+			Audio = nullptr;
+			AudioSource = nullptr;
+			PlayerReference = nullptr;
+			AudioPlayer = nullptr;
+			ActiveSound = nullptr;
+			FHRTFMaximums HRTFMaximums;
+			BasePitch = 1;
+			Volume = 1;
+			Azimuth = 0;
+			Elevation = 0;
+			Range = 0;
+			CloserEar = ECloserEar::EitherEar;
+			PickUpTime = 0;
+			SoundPlaying = false;
+			MixerDevice = nullptr;
+			Audio::AlignedFloatBuffer Buffer;
+			ActiveSound = new FActiveSound();
+			LeftSoundPtr = nullptr;
+			RightSoundPtr = nullptr;
+			SoundSource = nullptr;
+		}
 };
 
 // Class that holds the binaural synthesizer
@@ -223,7 +246,7 @@ public:
 		TArray<FHRTFValuesBasedOnElevation> HRTF_Minus20Degrees;
 	UPROPERTY()
 		TArray<FHRTFValuesBasedOnElevation> HRTF_Minus10Degrees;
-	UPROPERTY()
+	UPROPERTY(EditAnywhere)
 		TArray<FHRTFValuesBasedOnElevation> HRTF_0Degrees;
 	UPROPERTY()
 		TArray<FHRTFValuesBasedOnElevation> HRTF_Positive10Degrees;
@@ -235,7 +258,13 @@ protected:
 	virtual void BeginPlay() override;
 
 	// Called when the HRTF arrays are initialised
-	void InitialiseHRTFs(TArray<FHRTFValuesBasedOnElevation> HRTFArray, int8 ElevationIncrementer, float MaxDelay, float MaxPitch, float MaxVolume);
+	TArray<FHRTFValuesBasedOnElevation> InitialiseHRTFs(float MaxDelay, float MaxPitch, float MaxVolume);
+
+	// Sets up the Wave Instance variables
+	void WaveInstanceSetup(int32 Index, FWaveInstance* WaveToMod, ECloserEar SideEar);
+
+	// Called when a value is changed
+	void OnConstruction(const FTransform& Transform) override;
 
 public:
 	// Called every frame
@@ -254,9 +283,6 @@ public:
 	// Creates the binaural sound out of calculated values and sound waves
 	UFUNCTION()
 		void CreateSound(int32 Index);
-
-	// Sets up the Wave Instance variables
-	void WaveInstanceSetup(int32 Index, FWaveInstance* WaveToMod, ECloserEar SideEar);
 
 	// Finds the correct offsets from the arrays
 	float FindOffset(int32 Index, EHRTFPoint DataPoint);
