@@ -23,7 +23,6 @@ ABinauralTestTwelve::ABinauralTestTwelve()
 	SoundAttenuation.LPFFrequencyAtMax = 20000.f;
 	SoundAttenuation.HPFFrequencyAtMax = 5000.f;
 	SoundAttenuation.OcclusionVolumeAttenuation = 0.95f;
-	SoundAttenuation.OcclusionInterpolationTime = 0.05f;
 }
 
 // Called when the game starts or when spawned
@@ -88,6 +87,7 @@ void ABinauralTestTwelve::Tick(float DeltaTime)
 	SoundAttenuation.LPFRadiusMax = GetRange();
 	SoundAttenuation.ReverbDistanceMin = FMath::Clamp(GetRange(), 0.f, 1400.f);
 	SoundAttenuation.ReverbDistanceMax = GetRange();
+	SoundAttenuation.OcclusionInterpolationTime = GetAzimuth();
 }
 
 // Calculates Range between audio source and player
@@ -113,15 +113,7 @@ float ABinauralTestTwelve::GetAzimuth()
 	FVector ThisLoc = this->GetActorLocation() - PlayerReference->GetActorLocation();
 	ThisLoc.Z = 0;
 	ThisLoc.Normalize();
-	float Dot = FVector::DotProduct(ThisLoc, ForwardPoint);
-	 float Azimuth = UKismetMathLibrary::Acos(Dot) / (PI / 180);
-
-	// Gets the closest ear and sets full 360° rotation
-	FVector RightPoint = PlayerReference->GetActorRightVector();
-	RightPoint.Z = 0;
-	RightPoint.Normalize();
-	if (FVector::DotProduct(RightPoint, ThisLoc) > 0)
-		Azimuth = 360 - Azimuth;
+	float Azimuth = FVector::DotProduct(ThisLoc, ForwardPoint);
 
 	return Azimuth;
 }
