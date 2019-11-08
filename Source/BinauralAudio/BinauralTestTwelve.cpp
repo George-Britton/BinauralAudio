@@ -11,8 +11,8 @@ ABinauralTestTwelve::ABinauralTestTwelve()
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
 	AudioPlayer = CreateDefaultSubobject<UAudioComponent>(TEXT("Audio Player"));
 	AudioPlayer->SetupAttachment(this->RootComponent);
-	
-	// Sets the recommended default values for the binaural simulation
+
+	// Sets the values for the non-dynamic sound attenuation variables
 	SoundAttenuation.bAttenuateWithLPF = true;
 	SoundAttenuation.bEnableOcclusion = true;
 	SoundAttenuation.bEnableLogFrequencyScaling = true;
@@ -24,8 +24,6 @@ ABinauralTestTwelve::ABinauralTestTwelve()
 	SoundAttenuation.HPFFrequencyAtMax = 5000.f;
 	SoundAttenuation.OcclusionVolumeAttenuation = 0.95f;
 	SoundAttenuation.OcclusionInterpolationTime = 0.05f;
-	//SoundAttenuation.ReverbWetLevelMin = 0.03f;
-	//SoundAttenuation.ReverbWetLevelMax = 0.523f;
 }
 
 // Called when the game starts or when spawned
@@ -37,7 +35,7 @@ void ABinauralTestTwelve::BeginPlay()
 	if(Audio)
 	{
 		// This keeps the occlusion frequency filter to a max of the default max minus the highest 
-		SoundAttenuation.OcclusionLowPassFilterFrequency = FMath::Clamp(SoundAttenuation.LPFFrequencyAtMax - 3317.f, 0, SoundAttenuation.LPFFrequencyAtMax);
+		SoundAttenuation.OcclusionLowPassFilterFrequency = SoundAttenuation.LPFFrequencyAtMax = 20000.f - GetOcclusionFrequency();
 		
 		USoundAttenuation* AudioAttenSettings = NewObject<USoundAttenuation>(this);
 		AudioAttenSettings->Attenuation = SoundAttenuation;
@@ -56,6 +54,31 @@ void ABinauralTestTwelve::BeginPlay()
 	}else PlaySound();
 }
 
+// Simulates head occlusion
+float ABinauralTestTwelve::GetOcclusionFrequency()
+{
+	float TestingElevation = GetElevation();
+
+	if (TestingElevation < -15)
+	{
+		return (MaxFrequencies.Minus20Degrees - MinFrequencies.Minus20Degrees);
+	}else if (TestingElevation >= -15 && TestingElevation < -5)
+	{
+		return (MaxFrequencies.Minus10Degrees - MinFrequencies.Minus10Degrees);
+	}else if (TestingElevation >= 5 && TestingElevation <= 5)
+	{
+		return (MaxFrequencies.At0Degrees - MinFrequencies.At0Degrees);
+	}else if (TestingElevation <= 15 && TestingElevation > 5)
+	{
+		return (MaxFrequencies.Positive10Degrees - MinFrequencies.Positive10Degrees);
+	} else if (TestingElevation > 15)
+	{
+		return (MaxFrequencies.Positive20Degrees - MinFrequencies.Positive20Degrees);
+	}
+
+	return 0;
+}
+
 // Called every frame
 void ABinauralTestTwelve::Tick(float DeltaTime)
 {
@@ -70,14 +93,14 @@ void ABinauralTestTwelve::Tick(float DeltaTime)
 // Calculates Range between audio source and player
 float ABinauralTestTwelve::GetRange()
 {
-	Range = FVector::Dist(this->GetActorLocation(), PlayerReference->GetActorLocation());
+	float Range = FVector::Dist(this->GetActorLocation(), PlayerReference->GetActorLocation());
 	return Range;
 }
 
 // Calculates Elevation of audio source relative to player
 float ABinauralTestTwelve::GetElevation()
 {
-	Elevation = FMath::Sin((this->GetActorLocation().Z - PlayerReference->GetTransform().GetLocation().Z) / Range);
+	float Elevation = FMath::Sin((this->GetActorLocation().Z - PlayerReference->GetTransform().GetLocation().Z) / GetRange());
 	return Elevation;
 }
 
@@ -91,7 +114,7 @@ float ABinauralTestTwelve::GetAzimuth()
 	ThisLoc.Z = 0;
 	ThisLoc.Normalize();
 	float Dot = FVector::DotProduct(ThisLoc, ForwardPoint);
-	Azimuth = UKismetMathLibrary::Acos(Dot) / (PI / 180);
+	 float Azimuth = UKismetMathLibrary::Acos(Dot) / (PI / 180);
 
 	// Gets the closest ear and sets full 360° rotation
 	FVector RightPoint = PlayerReference->GetActorRightVector();
