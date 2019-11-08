@@ -17,16 +17,15 @@ ABinauralTestTwelve::ABinauralTestTwelve()
 	SoundAttenuation.bEnableOcclusion = true;
 	SoundAttenuation.bEnableLogFrequencyScaling = true;
 	SoundAttenuation.SpatializationAlgorithm = ESoundSpatializationAlgorithm::SPATIALIZATION_HRTF;
-	SoundAttenuation.StereoSpread = 0.f;
+	SoundAttenuation.StereoSpread = 50.f;
 	SoundAttenuation.LPFRadiusMin = 0.f;
 	SoundAttenuation.LPFFrequencyAtMin = 20000.f;
 	SoundAttenuation.LPFFrequencyAtMax = 20000.f;
 	SoundAttenuation.HPFFrequencyAtMax = 5000.f;
-	SoundAttenuation.OcclusionLowPassFilterFrequency = 3317.f;
-	SoundAttenuation.OcclusionVolumeAttenuation = 0.5f;
-	SoundAttenuation.OcclusionInterpolationTime = 0.5f;
-	SoundAttenuation.ReverbWetLevelMin = 0.03f;
-	SoundAttenuation.ReverbWetLevelMax = 0.523f;
+	SoundAttenuation.OcclusionVolumeAttenuation = 0.95f;
+	SoundAttenuation.OcclusionInterpolationTime = 0.05f;
+	//SoundAttenuation.ReverbWetLevelMin = 0.03f;
+	//SoundAttenuation.ReverbWetLevelMax = 0.523f;
 }
 
 // Called when the game starts or when spawned
@@ -34,11 +33,12 @@ void ABinauralTestTwelve::BeginPlay()
 {
 	Super::BeginPlay();
 
-	SoundAttenuation.LPFRadiusMax = GetRange();
-	SoundAttenuation.ReverbDistanceMin = FMath::Clamp(GetRange(), 0.f, 1400.f);
-	SoundAttenuation.ReverbDistanceMax = GetRange();
+	// Applies the attenuation settins to the audio file
 	if(Audio)
 	{
+		// This keeps the occlusion frequency filter to a max of the default max minus the highest 
+		SoundAttenuation.OcclusionLowPassFilterFrequency = FMath::Clamp(SoundAttenuation.LPFFrequencyAtMax - 3317.f, 0, SoundAttenuation.LPFFrequencyAtMax);
+		
 		USoundAttenuation* AudioAttenSettings = NewObject<USoundAttenuation>(this);
 		AudioAttenSettings->Attenuation = SoundAttenuation;
 		Audio->AttenuationSettings = AudioAttenSettings;
@@ -46,6 +46,7 @@ void ABinauralTestTwelve::BeginPlay()
 
 	AudioPlayer->SetSound(Audio);
 	
+	// Dictates whether the sound plays multiple times or just once
 	if (PlayOnceOrLoop == EPlayStyle::Loop)
 	{
 		FTimerHandle PlaySoundTimer;
@@ -59,6 +60,11 @@ void ABinauralTestTwelve::BeginPlay()
 void ABinauralTestTwelve::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	// Keeps the maximum absorption and reverb levels at the object's range, and the lower between 0 and 1400
+	SoundAttenuation.LPFRadiusMax = GetRange();
+	SoundAttenuation.ReverbDistanceMin = FMath::Clamp(GetRange(), 0.f, 1400.f);
+	SoundAttenuation.ReverbDistanceMax = GetRange();
 }
 
 // Calculates Range between audio source and player
@@ -92,11 +98,7 @@ float ABinauralTestTwelve::GetAzimuth()
 	RightPoint.Z = 0;
 	RightPoint.Normalize();
 	if (FVector::DotProduct(RightPoint, ThisLoc) > 0)
-	{
 		Azimuth = 360 - Azimuth;
-		CloserEar = ECloserEar::RightEar;
-	}
-	else CloserEar = ECloserEar::LeftEar;
 
 	return Azimuth;
 }

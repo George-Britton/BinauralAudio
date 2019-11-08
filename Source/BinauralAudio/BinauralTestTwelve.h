@@ -18,15 +18,6 @@ enum class EPlayStyle : uint8 {
 	MAX UMETA(DisplayName = "Max")
 };
 
-// Enum that stores the ear closest to the audio source
-UENUM()
-enum class ECloserEar : uint8 {
-	LeftEar UMETA(DisplayName = "Left Ear"),
-	RightEar UMETA(DisplayName = "RightEar"),
-	EitherEar UMETA(DisplayName = "Either Ear"),
-	MAX UMETA(DisplayName = "MAX")
-};
-
 UCLASS()
 class BINAURALAUDIO_API ABinauralTestTwelve : public AActor
 {
@@ -63,9 +54,7 @@ public:
 		float Elevation = 0;
 	UPROPERTY()
 		float Range = 0;
-	UPROPERTY()
-		ECloserEar CloserEar = ECloserEar::EitherEar;
-
+	
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
