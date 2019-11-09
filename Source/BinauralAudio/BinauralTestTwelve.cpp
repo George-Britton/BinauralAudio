@@ -33,9 +33,6 @@ void ABinauralTestTwelve::BeginPlay()
 	// Applies the attenuation settins to the audio file
 	if(Audio)
 	{
-		// This keeps the occlusion frequency filter to a max of the default max minus the highest 
-		SoundAttenuation.OcclusionLowPassFilterFrequency = SoundAttenuation.LPFFrequencyAtMax = 20000.f - GetOcclusionFrequency();
-		
 		USoundAttenuation* AudioAttenSettings = NewObject<USoundAttenuation>(this);
 		AudioAttenSettings->Attenuation = SoundAttenuation;
 		Audio->AttenuationSettings = AudioAttenSettings;
@@ -87,6 +84,10 @@ void ABinauralTestTwelve::Tick(float DeltaTime)
 	SoundAttenuation.LPFRadiusMax = GetRange();
 	SoundAttenuation.ReverbDistanceMin = FMath::Clamp(GetRange(), 0.f, 1400.f);
 	SoundAttenuation.ReverbDistanceMax = GetRange();
+	
+	// This keeps the occlusion frequency filter to a max of the default max minus the highest 
+	SoundAttenuation.OcclusionLowPassFilterFrequency = SoundAttenuation.LPFFrequencyAtMax - GetOcclusionFrequency();
+	
 	SoundAttenuation.OcclusionInterpolationTime = GetAzimuth();
 }
 
