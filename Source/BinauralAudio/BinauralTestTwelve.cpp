@@ -17,7 +17,7 @@ ABinauralTestTwelve::ABinauralTestTwelve()
 	SoundAttenuation.bEnableOcclusion = true;
 	SoundAttenuation.bEnableLogFrequencyScaling = true;
 	SoundAttenuation.SpatializationAlgorithm = ESoundSpatializationAlgorithm::SPATIALIZATION_HRTF;
-	SoundAttenuation.StereoSpread = 50.f;
+	SoundAttenuation.StereoSpread = 15.3f;
 	SoundAttenuation.LPFRadiusMin = 0.f;
 	SoundAttenuation.LPFFrequencyAtMin = 20000.f;
 	SoundAttenuation.LPFFrequencyAtMax = 20000.f;
