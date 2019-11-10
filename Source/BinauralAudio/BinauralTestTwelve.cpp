@@ -88,7 +88,7 @@ void ABinauralTestTwelve::Tick(float DeltaTime)
 	// This keeps the occlusion frequency filter to a max of the default max minus the highest 
 	SoundAttenuation.OcclusionLowPassFilterFrequency = SoundAttenuation.LPFFrequencyAtMax - GetOcclusionFrequency();
 	
-	SoundAttenuation.OcclusionInterpolationTime = GetAzimuth();
+	SoundAttenuation.OcclusionInterpolationTime = 0.02;
 }
 
 // Calculates Range between audio source and player
