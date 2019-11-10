@@ -21,7 +21,7 @@ ABinauralTestTwelve::ABinauralTestTwelve()
 	SoundAttenuation.LPFRadiusMin = 0.f;
 	SoundAttenuation.LPFFrequencyAtMin = 20000.f;
 	SoundAttenuation.LPFFrequencyAtMax = 20000.f;
-	SoundAttenuation.HPFFrequencyAtMax = 5000.f;
+	SoundAttenuation.HPFFrequencyAtMax = 2124.f;
 	SoundAttenuation.OcclusionVolumeAttenuation = 0.95f;
 }
 
